@@ -9,7 +9,6 @@ Citizen.CreateThread(function()
 end)
 
 
-
 Citizen.CreateThread(function()
   local dict = "anim@mp_player_intmenu@key_fob@"
   RequestAnimDict(dict)
