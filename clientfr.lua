@@ -18,13 +18,16 @@ Citizen.CreateThread(function()
   end
   while true do
     Citizen.Wait(0)
-	if (IsControlJustPressed(1, 303)) then
+	if (IsControlJustPressed(1, 303)) then --183 = Key G
 		local coords = GetEntityCoords(GetPlayerPed(-1))
 		local hasAlreadyLocked = false
 		cars = ESX.Game.GetVehiclesInArea(coords, 30)
 		local carstrie = {}
 		local cars_dist = {}		
 		notowned = 0
+
+		notshared = 0 -- sh59_keysystem 
+
 		if #cars == 0 then
 			ESX.ShowNotification("Il n'y a pas de véhicule vous appartenant à proximité.")
 		else
@@ -93,9 +96,59 @@ Citizen.CreateThread(function()
 					else
 						notowned = notowned + 1
 					end
-					if notowned == #carstrie then
-						ESX.ShowNotification("Il n'y a pas de véhicule vous appartenant à proximité.")
-					end	
+
+						local plate = ESX.Math.Trim(GetVehicleNumberPlateText(carstrie[i]))
+						ESX.TriggerServerCallback("sh59_KeySystem:CheckIfShared", function(cb) 
+							if cb and hasAlreadyLocked ~= true then
+								local vehicleLabel = GetDisplayNameFromVehicleModel(GetEntityModel(carstrie[i]))
+								vehicleLabel = GetLabelText(vehicleLabel)
+								local lock = GetVehicleDoorLockStatus(carstrie[i])
+
+								if lock == 1 or lock == 0 then
+									SetVehicleDoorShut(carstrie[i], 0, false)
+									SetVehicleDoorShut(carstrie[i], 1, false)
+									SetVehicleDoorShut(carstrie[i], 2, false)
+									SetVehicleDoorShut(carstrie[i], 3, false)
+									SetVehicleDoorsLocked(carstrie[i], 2)
+									PlayVehicleDoorCloseSound(carstrie[i], 1)
+									ESX.ShowNotification('Vous avez ~r~verrouillé~s~ votre ~y~'..vehicleLabel..'~s~.')
+									if not IsPedInAnyVehicle(PlayerPedId(), true) then
+										TaskPlayAnim(PlayerPedId(), dict, "fob_click_fp", 8.0, 8.0, -1, 48, 1, false, false, false)
+									end
+									SetVehicleLights(carstrie[i], 2)
+									Citizen.Wait(150)
+									SetVehicleLights(carstrie[i], 0)
+									Citizen.Wait(150)
+									SetVehicleLights(carstrie[i], 2)
+									Citizen.Wait(150)
+									SetVehicleLights(carstrie[i], 0)
+									hasAlreadyLocked = true
+								elseif lock == 2 then
+									SetVehicleDoorsLocked(carstrie[i], 1)
+									PlayVehicleDoorOpenSound(carstrie[i], 0)
+									ESX.ShowNotification('Vous avez ~g~déverrouillé~s~ votre ~y~'..vehicleLabel..'~s~.')
+									if not IsPedInAnyVehicle(PlayerPedId(), true) then
+										TaskPlayAnim(PlayerPedId(), dict, "fob_click_fp", 8.0, 8.0, -1, 48, 1, false, false, false)
+									end
+									SetVehicleLights(carstrie[i], 2)
+									Citizen.Wait(150)
+									SetVehicleLights(carstrie[i], 0)
+									Citizen.Wait(150)
+									SetVehicleLights(carstrie[i], 2)
+									Citizen.Wait(150)
+									SetVehicleLights(carstrie[i], 0)
+									hasAlreadyLocked = true
+								end
+							else
+								notshared = notshared + 1
+							end
+
+							if (notowned == #carstrie) and (notshared == #carstrie) then
+								ESX.ShowNotification("Il n'y a pas de véhicule vous appartenant à proximité.")
+							end	
+						end, plate)
+
+
 				end, plate)
 			end			
 		end
