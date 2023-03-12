@@ -1,9 +1,7 @@
-ESX               = nil
-
-TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
 ESX.RegisterServerCallback('carlock:isVehicleOwner', function(source, cb, plate)
-	local identifier = GetPlayerIdentifier(source, 0)
+	local xPlayer       = ESX.GetPlayerFromId(source)
+    local identifier 	= xPlayer.getIdentifier()
 
 	MySQL.Async.fetchAll('SELECT owner FROM owned_vehicles WHERE owner = @owner AND plate = @plate', {
 		['@owner'] = identifier,
